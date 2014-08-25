@@ -85,10 +85,11 @@ long long TransportStream::calculateBitrate(){
 	goToPacket(0);
 	bool keepSearching = true;
 	std::map<int, std::pair<int, long long> > pidToPCR;
-	int packetsDiff;
-	long long pcrDiff;
+	int packetsDiff = -1;
+	long long pcrDiff = -1;
 	for (int i = 0; i < getSizeInPackets() && keepSearching; i++){
 		TSPacket tsp = getCurrentPacket();
+		next();
 		if (tsp.hasPCR()){
 			int pid = tsp.getPID();
 			if (pidToPCR.count(pid)){
