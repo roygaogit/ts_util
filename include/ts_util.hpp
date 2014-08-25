@@ -27,7 +27,7 @@ private:
 	FILE *_ts;
 	unsigned int _currentPacket;
 	int _sizeOfFile;
-
+	std::string _tsPath;
 };
 	
 class TSPacket{

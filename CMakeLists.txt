@@ -5,7 +5,6 @@ FIND_PACKAGE( Boost 1.54 COMPONENTS program_options system filesystem REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
 #dirs
-set (BINARY_DIR "${CMAKE_SOURCE_DIR}/bin")
 set (SOURCE_DIR ${CMAKE_SOURCE_DIR}/src)
 set (HEADER_DIR ${CMAKE_SOURCE_DIR}/include)
 set (EXECUTABLE_OUTPUT_PATH "${BINARY_DIR}")
@@ -22,13 +21,16 @@ configure_file (
     )
     
 include_directories("${HEADER_DIR}")
-include_directories("${SOURCE_DIR}")
 
-SET(SRC_FILES "${SOURCE_DIR}/ts_util.cpp")
 
-# testing
+#Source files
+SET(TS_UTIL_SRC_FILES "${SOURCE_DIR}/ts_util.cpp")
+
+#Executables
+
+
 #library
-ADD_LIBRARY(ts_util "${SRC_FILES}")
+ADD_LIBRARY(ts_util "${TS_UTIL_SRC_FILES}")
 
 install(FILES "${HEADER_DIR}/ts_util.hpp" DESTINATION include/ts_util)
 install(TARGETS ts_util DESTINATION lib)

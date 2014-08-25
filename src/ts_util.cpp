@@ -7,7 +7,11 @@ namespace ts_util{
 
 
 TransportStream::TransportStream(const std::string& pathToTsFile, bool forceCreate)
-	:_currentPacket(0){
+	:_currentPacket(0), _sizeOfFile(0), _tsPath(pathToTsFile){
+
+	if (forceCreate && boost::filesystem::exists( pathToTsFile )){
+		throw std::invalid_argument("Trying to overwrite " + pathToTsFile);
+	}
 	const char *mode;
 	if (forceCreate){
 		mode = "w+b";
@@ -18,7 +22,10 @@ TransportStream::TransportStream(const std::string& pathToTsFile, bool forceCrea
 	if (!forceCreate && boost::filesystem::file_size(pathToTsFile) % TS_PACKET_SIZE != 0){
 		throw std::invalid_argument("Considering file size, it's posible this is not a ts file.");
 	}
-	_sizeOfFile = boost::filesystem::file_size(pathToTsFile);
+
+	if (!forceCreate){
+		_sizeOfFile = boost::filesystem::file_size(pathToTsFile);
+	}
 	_ts = fopen( pathToTsFile.c_str(), mode);
 	if (_ts == 0){
 		std::string err = std::string("File could not be opened. Tried ") + std::string(mode) + std::string( " mode, for file: ") + pathToTsFile;
@@ -33,13 +40,13 @@ TransportStream::~TransportStream(){
 TSPacket TransportStream::getCurrentPacket(){
 	TSPacket cur;
 	if (!hasPacket()){
-		throw std::out_of_range("There are no more packets in this ts!");
+		throw std::out_of_range("["+ _tsPath +"]There are no more packets in this ts!");
 	}
 	if (fread(cur.contents, TS_PACKET_SIZE, 1, _ts) != 1){
-		throw std::out_of_range("Could not read an entire packet!. Invalid ts?");
+		throw std::out_of_range("["+ _tsPath +"]Could not read an entire packet! Invalid ts?");
 	}
 	if (!cur.isValid()){
-		throw std::domain_error("TSPacket is not valid! Invalid ts or lost sync!");
+		throw std::domain_error("["+ _tsPath +"]TSPacket is not valid! Invalid ts or lost sync!");
 	}
 	goToPacket(_currentPacket);
 	return cur;
@@ -50,7 +57,7 @@ int TransportStream::getSizeInPackets(){
 }
 
 bool TransportStream::hasPacket(){
-	return !feof(_ts);
+	return _currentPacket < getSizeInPackets(); // feof falla, por eso fue cambiado.
 }
 
 void TransportStream::next(){
