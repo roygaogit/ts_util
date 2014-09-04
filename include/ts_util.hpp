@@ -36,6 +36,8 @@ class TSPacket{
 public:
 	TSPacket();
 	bool isValid();
+	bool hasAdaptationField();
+	bool hasDiscontinuityIndicator();
 	bool hasPCR();
 	int getPID();
 	long long getPCR();

@@ -1,6 +1,8 @@
 #include <ts_util.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 #include <stdexcept>
+#include <string>
 #include <map>
 #include <utility>
 namespace ts_util{
@@ -92,7 +94,7 @@ long long TransportStream::calculateBitrate(){
 		next();
 		if (tsp.hasPCR()){
 			int pid = tsp.getPID();
-			if (pidToPCR.count(pid)){
+			if (pidToPCR.count(pid) && tsp.getPCR() > pidToPCR[pid].second){
 				packetsDiff = i - pidToPCR[pid].first;
 				pcrDiff = tsp.getPCR() - pidToPCR[pid].second;
 				keepSearching = false;
@@ -102,7 +104,11 @@ long long TransportStream::calculateBitrate(){
 		}
 	}
 	if (pcrDiff < 1){
-		throw std::domain_error("PCR difference is not positive!");
+		pcrDiff += 2576980377600LL; // To fix an overflow. This is the max value representable by a PTS
+		// std::string msg("PCR difference is not positive! (");
+		// msg += boost::lexical_cast<std::string>(pcrDiff);
+		// msg += ")";
+		// throw std::domain_error(msg);
 	}
 	long long bitrate = packetsDiff * TS_PACKET_SIZE * 8 * 27000000LL / pcrDiff;
 	goToPacket(savedCurrentPacket);
@@ -120,15 +126,24 @@ TSPacket::TSPacket(){
 bool TSPacket::isValid(){
 	return this->contents[0] == TS_SYNC_BYTE;
 }
+
+bool TSPacket::hasAdaptationField()
+{
+	return (this->contents[3] & 0x20) != 0;
+}
+
 int TSPacket::getPID(){
 	return (( static_cast<int>(this->contents[1]) << 8) | this->contents[2]) & 0x1FFF;
 }
 
 bool TSPacket::hasPCR(){
-	bool adaptation_field = (this->contents[3] & 0x20) != 0;
-    if (adaptation_field && ((unsigned char)this->contents[4]) >= 7)
+    if (hasAdaptationField() && ((unsigned char)this->contents[4]) >= 7)
         return (this->contents[5] & 0x10) != 0;
     return false;
+}
+
+bool TSPacket::hasDiscontinuityIndicator(){
+	return hasAdaptationField() && this->contents[5] & 0x80;
 }
 
 long long TSPacket::getPCR(){

@@ -24,6 +24,8 @@ void TSStreamerOverRtp::start(){
 		throw ex;
 	}
 	cout << "Connection established successfully!\n";
+	cout << "Multicast group: " << _ipAddress << '\n';
+	cout << "Multicast group port: " << _port << '\n';
 	long long bitrate = _ts.calculateBitrate();
 	vector<unsigned char> buff;
 	for (;;_ts.goToPacket(0))
