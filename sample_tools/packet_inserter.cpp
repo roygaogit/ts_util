@@ -47,7 +47,7 @@ void replacePackets(TransportStream &inputTS, TransportStream &outputTS, vector<
 
 
 void insertPacket(TransportStream &tsInput, TransportStream &tsOutput, TransportStream &packet, int interval){
-	long long packetsBetweenAppearance = tsInput.calculateBitrate() * interval / 188000LL;
+	long long packetsBetweenAppearance = tsInput.calculateBitrate() * interval / 1504000LL; // bitrate / 1504000 = cantidad de paquetes por milisegundo.
 	bool shouldInsert = true;
 	TSPacket insertionPacket = packet.getCurrentPacket();
 	tsInput.goToPacket(1);
