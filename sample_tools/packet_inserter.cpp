@@ -11,11 +11,12 @@
 #include <string>
 #include <vector>
 
-//  g++ packet_replacer.cpp -lts_util -lboost_system -lboost_program_options -lboost_filesystem
+//  g++ packet_inserter.cpp -lts_util -lboost_system -lboost_program_options -lboost_filesystem
 
 
 using ts_util::TransportStream;
 using ts_util::TSPacket;
+using ts_util::NULL_PACKET_PID;
 using std::cout;
 using std::endl;
 using std::set;
@@ -26,9 +27,6 @@ using boost::program_options::options_description;
 using boost::program_options::value;
 
 namespace po = boost::program_options;
-
-int64_t bytes_read = 0;
-
 
 
 void replacePackets(TransportStream &inputTS, TransportStream &outputTS, vector<TSPacket> &vts){
@@ -48,7 +46,22 @@ void replacePackets(TransportStream &inputTS, TransportStream &outputTS, vector<
 }
 
 
-void insertPacket(TransportStream &tsInput, TransportStream &tsInput, TransportStream &packet, int interval){
+void insertPacket(TransportStream &tsInput, TransportStream &tsOutput, TransportStream &packet, int interval){
+	long long packetsBetweenAppearance = tsInput.calculateBitrate() * interval / 188000LL;
+	bool shouldInsert = true;
+	TSPacket insertionPacket = packet.getCurrentPacket();
+	tsInput.goToPacket(1);
+	for (int i = 1; tsInput.hasPacket(); tsInput.next(), tsOutput.next(), i++){
+		if ( i % packetsBetweenAppearance == 0){
+			shouldInsert = true;
+		}
+		TSPacket p = tsInput.getCurrentPacket();
+		if (shouldInsert && p.getPID() == NULL_PACKET_PID){
+			p = insertionPacket;
+			shouldInsert = false;
+		}
+		tsOutput.writePacketInPosition(p);
+	}
 	//Calcular bitrate
 	//Contar paquetes entre aparicion y aparicion
 	//Ver en qué puntos se debe insertar los packets
