@@ -29,22 +29,6 @@ using boost::program_options::value;
 namespace po = boost::program_options;
 
 
-void replacePackets(TransportStream &inputTS, TransportStream &outputTS, vector<TSPacket> &vts){
-	while (inputTS.hasPacket()){
-		TSPacket packetToWrite = inputTS.getCurrentPacket();
-		inputTS.next();
-		int pid = packetToWrite.getPID();
-
-		for (int i = 0; i < vts.size(); i++){
-			if (vts[i].getPID() == pid){
-				packetToWrite = vts[i];
-			}
-		}
-		outputTS.writePacketInPosition( packetToWrite );
-		outputTS.next();
-	}
-}
-
 
 void insertPacket(TransportStream &tsInput, TransportStream &tsOutput, TransportStream &packet, int interval){
 	long long packetsBetweenAppearance = tsInput.calculateBitrate() * interval / 1504000LL; // bitrate / 1504000 = cantidad de paquetes por milisegundo.
